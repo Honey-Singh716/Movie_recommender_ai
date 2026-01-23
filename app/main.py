@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import warnings
-from sklearn.exceptions import InconsistentVersionWarning
 
 from modules.text_preprocessing import clean_and_normalize_text
 from modules.models import load_models
@@ -14,8 +13,7 @@ from modules.movie_battle_page import movie_battle_ui
 from modules.about_page import about
 
 # Suppress warnings
-warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
-warnings.filterwarnings("ignore", category=UserWarning, module="sklearn")
+warnings.filterwarnings("ignore")
 
 cast_df = pd.read_csv("./data/cast_df.csv")
 
