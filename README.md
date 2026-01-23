@@ -2,6 +2,9 @@
 
 A sophisticated movie recommendation system that suggests films based on your mood, preferences, and viewing history. Built with Streamlit and machine learning.
 
+** Demo Link **  https://movierecommenderai-wrfh7tewswqrappwusrpy7k.streamlit.app/
+
+
 ## 🚀 Features
 
 - Mood-based movie recommendations
