@@ -1,6 +1,6 @@
 import streamlit as st
 
-def about_section():
+def about():
     st.markdown("## 🎬 About Movie Recommender AI")
 
     st.markdown(
