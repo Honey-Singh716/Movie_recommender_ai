@@ -68,4 +68,4 @@ def about():
 
 
 # Call this function when About page is selected
-about_section()
+about()
