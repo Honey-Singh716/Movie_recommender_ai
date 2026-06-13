@@ -160,8 +160,7 @@ def movie_battle_ui(data):
                 else:
                     st.info(" Tie")
 
-            st.markdown("---")  # separator between metrics
-
+            st.markdown("---") 
 
 
         st.subheader(" Advanced Visual Analysis")
