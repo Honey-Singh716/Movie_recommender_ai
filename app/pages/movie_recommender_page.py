@@ -1,6 +1,6 @@
 import streamlit as st
-from modules.recommendations import recommend
-from modules.utils import display_movie_card
+from core.recommendations import recommend
+from utils.utils import display_movie_card
 
 def show_movie_recommender_page(data):
    

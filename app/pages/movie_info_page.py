@@ -1,8 +1,8 @@
 import streamlit as st
-from .recommendations import recommend
-from .utils import display_movie_card, get_movie_details
+from core.recommendations import recommend
+from utils.utils import display_movie_card, get_movie_details
 import pandas as pd
-from .utils import get_poster_from_tmdb_id,get_actor_image_by_name
+from utils.utils import get_poster_from_tmdb_id,get_actor_image_by_name
 
 
 
@@ -60,24 +60,28 @@ def show_movie_info_page(data,cast_df):
                     st.write(f"**Genres:** {details['genres']}")
                     st.write(f"**Director:** {details['director']}")
                     
-                    #Movie Bidget
-                    if 'budget' in details and details['budget']:
-                        st.metric("Budget", f"${details['budget']:,.2f}")
+                    #Movie Budget
+                    budget = details.get("budget")
+                    if isinstance(budget, (int, float)) and budget > 0:
+                        st.metric("Budget", f"${budget:,.2f}")
+                    else:
+                        st.metric("Budget", "N/A")
 
-                    # Revenue prediction
-                    if 'revenue' in details and details['revenue']:
-                        st.metric("Revenue", f"${details['revenue']:,.2f}")
+                    # Revenue
+                    revenue = details.get("revenue")
+                    if isinstance(revenue, (int, float)) and revenue > 0:
+                        st.metric("Revenue", f"${revenue:,.2f}")
+                    else:
+                        st.metric("Revenue", "N/A")
                     
                     #Profit Calculation
-
-                    budget = details.get("budget")
-                    revenue = details.get("revenue")
-
-                    if isinstance(budget, (int, float)) and isinstance(revenue, (int, float)):
+                    if isinstance(budget, (int, float)) and isinstance(revenue, (int, float)) and budget > 0 and revenue > 0:
                         if revenue > budget:
                             st.metric("Profit", f"${revenue - budget:,.2f}")
                         else:
                             st.metric("Profit", "No Profit")
+                    else:
+                        st.metric("Profit", "N/A")
 
 
                 # Movie overview
@@ -116,7 +120,7 @@ def get_movie_cast(movie_id,cast_df,top_n = 10):
     return cast    
 
 
-TMDB_API_KEY = st.secrets["TMDB_API_KEY"]
+TMDB_API_KEY = st.secrets.get("TMDB_API_KEY")
 
 TMDB_IMG = "https://image.tmdb.org/t/p/w185"
 

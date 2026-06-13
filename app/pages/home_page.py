@@ -1,5 +1,5 @@
 import streamlit as st
-from .utils import display_movie_card
+from utils.utils import display_movie_card
 
 
 def show_home_page(data):

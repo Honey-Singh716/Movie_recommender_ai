@@ -6,7 +6,7 @@ import requests
 
 
 
-TMDB_API_KEY = st.secrets["TMDB_API_KEY"]
+TMDB_API_KEY = st.secrets.get("TMDB_API_KEY")
 
 
 
@@ -105,8 +105,8 @@ def movie_battle_ui(data):
             "Budget ": (safe(m1['budget']), safe(m2['budget'])),
             "Revenue ": (safe(m1['revenue']), safe(m2['revenue'])),
             "Profit ": (
-                safe(m1['revenue']) - safe(m1['budget']),
-                safe(m2['revenue']) - safe(m2['budget'])
+                safe(m1['revenue']) - safe(m1['budget']) if safe(m1['revenue']) > 0 and safe(m1['budget']) > 0 else 0.0,
+                safe(m2['revenue']) - safe(m2['budget']) if safe(m2['revenue']) > 0 and safe(m2['budget']) > 0 else 0.0
             )
         }
 
@@ -128,6 +128,8 @@ def movie_battle_ui(data):
             if "Vote" in metric:
                 return f"{int(value):,}"
             if "Revenue" in metric or "Budget" in metric or "Profit" in metric:
+                if value == 0:
+                    return "N/A"
                 return f"${value:,.0f}"
             return f"{value:,.2f}"
 
@@ -164,14 +166,13 @@ def movie_battle_ui(data):
         st.subheader(" Advanced Visual Analysis")
         
         def plot_mini_bar(movie_1, movie_2, v1, v2, title, ylabel):
-            fig, ax = plt.subplots(figsize=(3.2, 2.4))  # small figure
-            ax.bar(["movie_1", "movie_2"], [v1, v2],color = ["r","b"])
-            ax.set_title(title, fontsize=9)
-            ax.set_ylabel(ylabel, fontsize=8)
-            ax.tick_params(axis='x', labelsize=7) 
-            ax.tick_params(axis='y', labelsize=7)
-            plt.tight_layout()
-            st.pyplot(fig, use_container_width=False)
+            m1_name = movie_1[:15] + "..." if len(movie_1) > 15 else movie_1
+            m2_name = movie_2[:15] + "..." if len(movie_2) > 15 else movie_2
+            chart_data = pd.DataFrame(
+                {title: [v1, v2]},
+                index=[m1_name, m2_name]
+            )
+            st.bar_chart(chart_data, height=200)
 
 
         
@@ -268,8 +269,8 @@ def movie_battle_ui(data):
         st.markdown("## Profit")
         col_text, col_plot = st.columns([2, 1])
        
-        profit = safe(m1['revenue']) - safe(m1['budget'])
-        profit2 = safe(m2["revenue"]) - safe(m2["budget"])
+        profit = safe(m1['revenue']) - safe(m1['budget']) if safe(m1['revenue']) > 0 and safe(m1['budget']) > 0 else 0.0
+        profit2 = safe(m2["revenue"]) - safe(m2["budget"]) if safe(m2['revenue']) > 0 and safe(m2['budget']) > 0 else 0.0
 
         with col_text:
             st.metric(movie_1, profit)

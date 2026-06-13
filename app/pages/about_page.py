@@ -1,7 +1,7 @@
 import streamlit as st
 
 def about():
-    st.markdown("## 🎬 About Movie Recommender AI")
+    st.markdown("## About Movie Recommender AI")
 
     st.markdown(
         """
@@ -20,7 +20,7 @@ def about():
 
     st.markdown("---")
 
-    st.markdown("### 🧠 Technologies Used")
+    st.markdown("### Technologies Used")
     st.markdown(
         """
         - **Python**
@@ -35,34 +35,34 @@ def about():
 
     st.markdown("---")
 
-    st.markdown("### ✨ Key Features")
+    st.markdown("### Key Features")
     st.markdown(
         """
-        - 🎭 Mood-based movie recommendations  
-        - 🧠 Content-based filtering using cosine similarity  
-        - ⚔️ Movie Battle (compare two movies)  
-        - 🎬 Detailed movie information (cast, ratings, overview)  
-        - 🌐 Deployed using Streamlit Community Cloud  
+        -  Mood-based movie recommendations  
+        -  Content-based filtering using cosine similarity  
+        -  Movie Battle (compare two movies)  
+        -  Detailed movie information (cast, ratings, overview)  
+        -  Deployed using Streamlit Community Cloud  
         """
     )
 
     st.markdown("---")
 
-    st.markdown("### 📬 Contact & Profiles")
+    st.markdown("### Contact & Profiles")
 
     st.markdown(
         """
-        - 🔗 **LinkedIn:** https://www.linkedin.com/in/honey-singh-in
-        - 🧠 **Kaggle:** https://www.kaggle.com/honeysingh12coder
-        - 💻 **GitHub:** https://github.com/Honey-Singh716
-        - ✉️ **Email:** honeysingh.work12@gmail.com
+        -  **LinkedIn:** https://www.linkedin.com/in/honey-singh-in
+        -  **Kaggle:** https://www.kaggle.com/honeysingh12coder
+        -  **GitHub:** https://github.com/Honey-Singh716
+        -  **Email:** honeysingh.work12@gmail.com
         """
     )
 
     st.markdown("---")
 
     st.caption(
-        "⚠️ This project is built for **educational and demonstration purposes only**. "
+        " This project is built for **educational and demonstration purposes only**. "
         "It does not aim to replace commercial recommendation platforms."
     )
 

@@ -59,12 +59,14 @@ def display_movie_card(movie_row):
     st.markdown(
         """
         <div style="
-            background:#141414;
-            border-radius:14px;
-            padding:10px;
-            border:1px solid #2a2a2a;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
             cursor: default;
-        ">
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        " onmouseover="this.style.transform='scale(1.05)'; this.style.boxShadow='0 10px 20px rgba(255,65,108,0.2)';" onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 4px 6px rgba(0,0,0,0.3)';">
         """,
         unsafe_allow_html=True
     )

@@ -1,7 +1,7 @@
 import streamlit as st
-from .recommendations import recommend_movies_by_genres
-from .mood_prediction import predict_mood, get_genres_for_mood
-from .utils import display_movie_card
+from core.recommendations import recommend_movies_by_genres
+from core.mood_prediction import predict_mood, get_genres_for_mood
+from utils.utils import display_movie_card
 
 def show_mood_page(data, mood_model):
     """Display the mood-based recommendation page"""

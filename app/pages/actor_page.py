@@ -1,6 +1,6 @@
 import streamlit as st
-from .recommendations import recommend_by_actor
-from .utils import display_movie_card, get_actor_image_by_name
+from core.recommendations import recommend_by_actor
+from utils.utils import display_movie_card, get_actor_image_by_name
 
 
 # app/modules/actor_page.py
