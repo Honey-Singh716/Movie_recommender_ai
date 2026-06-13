@@ -5,13 +5,13 @@ import warnings
 
 from core.text_preprocessing import clean_and_normalize_text
 from core.models import load_models
-from pages.home_page import show_home_page
-from pages.movie_info_page import show_movie_info_page
-from pages.mood_page import show_mood_page
-from pages.actor_page import show_actor_page
-from pages.movie_recommender_page import show_movie_recommender_page
-from pages.movie_battle_page import movie_battle_ui
-from pages.about_page import about
+from views.home_page import show_home_page
+from views.movie_info_page import show_movie_info_page
+from views.mood_page import show_mood_page
+from views.actor_page import show_actor_page
+from views.movie_recommender_page import show_movie_recommender_page
+from views.movie_battle_page import movie_battle_ui
+from views.about_page import about
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
