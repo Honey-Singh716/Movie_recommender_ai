@@ -42,8 +42,7 @@ def show_actor_page(data, initial_actor=""):
 
 
         with col2:
-            st.subheader(f"Movies featuring {st.session_state.actor_search}")
-          
+            pass  # Actor bio / extra info can be added here later
 
         st.divider()
 

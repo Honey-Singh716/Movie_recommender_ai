@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import os
 import warnings
 
 from core.text_preprocessing import clean_and_normalize_text
@@ -15,7 +16,10 @@ from pages.about_page import about
 # Suppress warnings
 warnings.filterwarnings("ignore")
 
-cast_df = pd.read_csv("./data/processed/cast_df.csv")
+# Resolve data path relative to this file so it works from any working directory
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+_PROJECT_ROOT = os.path.dirname(_APP_DIR)
+DATA_DIR = os.path.join(_PROJECT_ROOT, "data", "processed")
 
 # Set page configuration
 st.set_page_config(
@@ -111,13 +115,15 @@ st.markdown("""
 def main():
     try:
         # Load models and data
-        data, tfidf, similarity,mood_model = load_models()
-        
+        data, tfidf, similarity, mood_model = load_models()
+        cast_df = pd.read_csv(os.path.join(DATA_DIR, "cast_df.csv"))
+
         # Store in session state for access across modules
         st.session_state.data = data
         st.session_state.tfidf = tfidf
         st.session_state.similarity = similarity
         st.session_state.mood_model = mood_model
+
         
     
         pages = [

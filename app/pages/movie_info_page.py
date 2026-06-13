@@ -120,10 +120,6 @@ def get_movie_cast(movie_id,cast_df,top_n = 10):
     return cast    
 
 
-TMDB_API_KEY = st.secrets.get("TMDB_API_KEY")
-
-TMDB_IMG = "https://image.tmdb.org/t/p/w185"
-
 
 def show_cast_section(movie_row, cast_df):
     st.markdown("### Top Cast")
@@ -137,9 +133,12 @@ def show_cast_section(movie_row, cast_df):
     cols = st.columns(5)  # more columns = smaller cards
     col_idx = 0
 
+    tmdb_api_key = st.secrets.get("TMDB_API_KEY")
+
     for _, actor in cast.iterrows():
-        img = get_actor_image_by_name(actor["name"],TMDB_API_KEY)
+        img = get_actor_image_by_name(actor["name"], tmdb_api_key)
         actor_name = actor.get('name', 'Unknown')
+
 
         with cols[col_idx % 5]:
             # Display the cast member without click functionality

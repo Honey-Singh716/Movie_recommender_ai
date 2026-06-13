@@ -10,24 +10,35 @@ def get_movie_details(movie_title, data):
     """
     try:
         movie = data[data['title'] == movie_title].iloc[0]
-        
-        # Extract director from crew (first person listed)
-        director = movie['crew'][0] if isinstance(movie.get('crew'), list) and movie.get('crew') else "Unknown"
-        
+
+        def safe_get(key, default=None):
+            """Safely get a value from a pandas Series row."""
+            val = movie[key] if key in movie.index else default
+            # Treat NaN as missing
+            import math
+            if isinstance(val, float) and math.isnan(val):
+                return default
+            return val
+
+        # Extract director from crew list
+        crew = safe_get('crew', [])
+        director = crew[0] if isinstance(crew, list) and len(crew) > 0 else "Unknown"
+
         # Format genres
-        genres = ", ".join(str(g) for g in movie.get('genres', [])) if isinstance(movie.get('genres'), list) else "N/A"
-        
+        genres_raw = safe_get('genres', [])
+        genres = ", ".join(str(g) for g in genres_raw) if isinstance(genres_raw, list) else "N/A"
+
         return {
-            'title': movie.get('title', 'N/A'),
-            'release_date': movie.get('release_date', 'N/A'),
-            'vote_average': movie.get('vote_average', 'N/A'),
-            'overview': movie.get('overview', 'No overview available'),
+            'title': safe_get('title', 'N/A'),
+            'release_date': safe_get('release_date', 'N/A'),
+            'vote_average': safe_get('vote_average', 'N/A'),
+            'overview': safe_get('overview', 'No overview available'),
             'director': director,
             'genres': genres,
-            'runtime': movie.get('runtime', 'N/A'),
-            'revenue': movie.get('revenue', 'N/A'),
-            'budget': movie.get('budget', 'N/A'),
-            'popularity': movie.get('popularity', 'N/A')
+            'runtime': safe_get('runtime', 'N/A'),
+            'revenue': safe_get('revenue', 'N/A'),
+            'budget': safe_get('budget', 'N/A'),
+            'popularity': safe_get('popularity', 'N/A')
         }
     except IndexError:
         return None

@@ -67,5 +67,4 @@ def about():
     )
 
 
-# Call this function when About page is selected
-about()
+# NOTE: about() is called from main.py; do NOT call it here at module level.

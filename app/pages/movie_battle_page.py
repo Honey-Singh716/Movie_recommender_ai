@@ -6,14 +6,11 @@ import requests
 
 
 
-TMDB_API_KEY = st.secrets.get("TMDB_API_KEY")
-
-
 
 @st.cache_data(show_spinner=False)
-def get_poster_from_tmdb_id(tmdb_id):
+def get_poster_from_tmdb_id(tmdb_id, api_key):
     url = f"https://api.themoviedb.org/3/movie/{tmdb_id}"
-    params = {"api_key": TMDB_API_KEY}
+    params = {"api_key": api_key}
 
     try:
         response = requests.get(url, params=params, timeout=5).json()
@@ -24,6 +21,7 @@ def get_poster_from_tmdb_id(tmdb_id):
         pass
 
     return None
+
 
 
 
@@ -61,9 +59,10 @@ def movie_battle_ui(data):
 
         tmdb_id_1 = int(m1['id'])
         tmdb_id_2 = int(m2['id'])
-        
-        poster_1 = get_poster_from_tmdb_id(tmdb_id_1)
-        poster_2 = get_poster_from_tmdb_id(tmdb_id_2)
+
+        api_key = st.secrets.get("TMDB_API_KEY")
+        poster_1 = get_poster_from_tmdb_id(tmdb_id_1, api_key)
+        poster_2 = get_poster_from_tmdb_id(tmdb_id_2, api_key)
 
 
         # Safe numeric extraction
@@ -117,8 +116,10 @@ def movie_battle_ui(data):
 
 
         st.markdown("## Movie Info")
-        st.write(f"**{movie_1}** → Release Year: ***{int(m1['release_date'][:4])}***")
-        st.write(f"**{movie_2}** → Release Year: ***{int(m2['release_date'][:4])}***")
+        def safe_year(val):
+            return str(val)[:4] if isinstance(val, str) and len(val) >= 4 else "N/A"
+        st.write(f"**{movie_1}** → Release Year: ***{safe_year(m1['release_date'])}***")
+        st.write(f"**{movie_2}** → Release Year: ***{safe_year(m2['release_date'])}***")
 
         st.subheader(" Head-to-Head Comparison")
           
