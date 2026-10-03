@@ -1,19 +1,34 @@
 import pandas as pd
+import numpy as np
 import streamlit as st
 
-def recommend(movie_title, data, similarity, top_n= 20):
-    """Get movie recommendations based on similarity"""
+
+def recommend(movie_title, data, similarity, top_n=20):
+    """
+    Get movie recommendations based on cosine similarity.
+    Returns a list of movie titles, or empty list if movie not found.
+    """
     try:
-        idx = data[data['title'] == movie_title].index[0]
-        sim_scores = list(enumerate(similarity[idx]))
-        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:top_n+1]
+        matches = data[data['title'] == movie_title]
+        if matches.empty:
+            st.warning(f"Movie '{movie_title}' not found in the database.")
+            return []
+        idx = matches.index[0]
+        # Get the integer position in the dataframe for indexing similarity matrix
+        pos = data.index.get_loc(idx)
+        sim_scores = list(enumerate(similarity[pos]))
+        sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)[1:top_n + 1]
         return [data.iloc[i[0]]['title'] for i in sim_scores]
+    except (IndexError, KeyError) as e:
+        st.warning(f"Could not find recommendations: movie index issue — {e}")
+        return []
     except Exception as e:
         st.error(f"Error finding recommendations: {str(e)}")
         return []
 
+
 def recommend_movies_by_genres(
-    genres: list[str],
+    genres: list,
     data,
     max_movies: int = 50,
     min_vote_avg: float = 5.5,
@@ -34,8 +49,6 @@ def recommend_movies_by_genres(
     """
     if not genres:
         return pd.DataFrame()
-
-    import numpy as np
 
     target_genres = {g.lower() for g in genres}
 
@@ -81,19 +94,20 @@ def recommend_movies_by_genres(
     return result
 
 
-
-
 def recommend_by_actor(actor_name, data, top_n=30):
     """
     Return movies featuring the given actor/actress using EXACT cast matching.
     Returns the full movie data needed for display.
     """
+    if not actor_name or not actor_name.strip():
+        return pd.DataFrame()
+
     # Normalize actor name
-    actor_name = actor_name.strip().lower()
+    actor_name_lower = actor_name.strip().lower()
 
     def exact_actor_match(cast):
         if isinstance(cast, list):
-            return actor_name in [actor.strip().lower() for actor in cast]
+            return actor_name_lower in [actor.strip().lower() for actor in cast]
         return False
 
     # Apply strict filtering and return all columns
@@ -104,4 +118,3 @@ def recommend_by_actor(actor_name, data, top_n=30):
 
     # Sort by popularity and return all columns
     return actor_movies.sort_values("popularity", ascending=False).head(top_n)
-

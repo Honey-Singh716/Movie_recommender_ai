@@ -24,6 +24,7 @@ DATA_DIR = os.path.join(_PROJECT_ROOT, "data", "processed")
 # Set page configuration
 st.set_page_config(
     page_title="Movie AI Recommender",
+    # page_icon="",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -101,22 +102,83 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
     }
     
-    /* Hide top border in sidebar */
+    /* Sidebar */
     [data-testid="stSidebar"] {
         background-color: #0E1117;
         border-right: 1px solid rgba(255, 255, 255, 0.05);
     }
-    
+
+    /* Watchlist badge */
+    .wl-badge {
+        display: inline-block;
+        background: linear-gradient(90deg, #FF416C, #FF4B2B);
+        border-radius: 50px;
+        padding: 2px 12px;
+        font-size: 12px;
+        font-weight: 700;
+        color: white;
+        margin-left: 6px;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 
+def _render_sidebar_extras(data):
+    """Render watchlist and quick stats in the sidebar."""
+    st.sidebar.markdown("---")
+
+    # ── Quick Stats ────────────────────────────────────────────────
+    st.sidebar.markdown("###  Library Stats")
+    total = len(data)
+    genres_col = data.get("genres") if hasattr(data, "get") else None
+    # Count unique genres safely
+    try:
+        all_genres = set()
+        for g_list in data["genres"].dropna():
+            if isinstance(g_list, list):
+                all_genres.update(g_list)
+        num_genres = len(all_genres)
+    except Exception:
+        num_genres = "—"
+
+    col_a, col_b = st.sidebar.columns(2)
+    col_a.metric("Movies", f"{total:,}")
+    col_b.metric("Genres", num_genres)
+
+    # ── Watchlist ─────────────────────────────────────────────────
+    st.sidebar.markdown("---")
+    watchlist = st.session_state.get("watchlist", [])
+    wl_count = len(watchlist)
+    wl_label = f"❤️ Watchlist ({wl_count})" if wl_count else "🤍 Watchlist (empty)"
+    with st.sidebar.expander(wl_label, expanded=False):
+        if watchlist:
+            for title in watchlist:
+                c1, c2 = st.columns([4, 1])
+                c1.markdown(f"**{title[:22]}{'…' if len(title)>22 else ''}**")
+                if c2.button("✕", key=f"sidebar_rm_{title[:20]}"):
+                    st.session_state.watchlist.remove(title)
+                    st.rerun()
+            if st.button(" Clear Watchlist", use_container_width=True):
+                st.session_state.watchlist = []
+                st.rerun()
+        else:
+            st.caption("Add movies using the 🤍 button on any card.")
+
+    # ── Search History ───────────────────────────────────────────
+    history = st.session_state.get("search_history", [])
+    if history:
+        st.sidebar.markdown("---")
+        with st.sidebar.expander(" Recent Searches", expanded=False):
+            for h in history:
+                st.caption(f" {h}")
+
 
 def main():
     try:
-        # Load models and data
+        # Load models and data (cached — runs only once per session)
         data, tfidf, similarity, mood_model = load_models()
-        cast_df = pd.read_csv(os.path.join(DATA_DIR, "cast_df.csv"))
+        from utils.db_manager import load_cast_data
+        cast_df = load_cast_data()
 
         # Store in session state for access across modules
         st.session_state.data = data
@@ -124,7 +186,9 @@ def main():
         st.session_state.similarity = similarity
         st.session_state.mood_model = mood_model
 
-        
+        # Initialize watchlist
+        if "watchlist" not in st.session_state:
+            st.session_state.watchlist = []
     
         pages = [
             "Home",
@@ -136,18 +200,47 @@ def main():
             "About"
         ]
 
+        # Map display names → internal page keys
+        page_keys = {
+            "Home": "Home",
+            "Movie Information": "Movie Information",
+            "Movie Recommender": "Movie Recommender",
+            "Mood-Based": "Mood-Based",
+            "Actor Filmography": "Actor Filmography",
+            "Movie Battle": "Movie Battle",
+            "About": "About",
+        }
+
         # Initialize once
         if "current_page" not in st.session_state:
             st.session_state.current_page = "Home"
 
-        selected_page = st.sidebar.radio(
+        # Find which display label matches current page
+        current_display = next((k for k, v in page_keys.items() if v == st.session_state.current_page), pages[0])
+
+        # Sidebar logo/header
+        st.sidebar.markdown("""
+        <div style="text-align:center; padding:10px 0 4px;">
+            <span style="font-size:36px;"></span><br>
+            <span style="font-weight:800; font-size:18px; 
+                         background:linear-gradient(90deg,#FF416C,#FF4B2B);
+                         -webkit-background-clip:text; -webkit-text-fill-color:transparent;">
+                Movie AI
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        selected_display = st.sidebar.radio(
             "Navigation",
             pages,
-            index=pages.index(st.session_state.current_page)
+            index=pages.index(current_display)
         )
 
-        # Sidebar click updates session state
-        st.session_state.current_page = selected_page
+        # Update session state
+        st.session_state.current_page = page_keys[selected_display]
+
+        # Render sidebar extras (stats, watchlist, history)
+        _render_sidebar_extras(data)
 
         current_page = st.session_state.current_page
         
@@ -172,7 +265,6 @@ def main():
             actor_name = st.session_state.get('actor_search', '')
             show_actor_page(data, initial_actor=actor_name)
 
-        
         # Movie Battle Page
         elif current_page == "Movie Battle":
             movie_battle_ui(data)
@@ -183,6 +275,9 @@ def main():
     except Exception as e:
         st.error(f"An error occurred: {str(e)}")
         st.error("Please try again or contact support if the issue persists.")
+        import traceback
+        with st.expander(" Error details (for debugging)"):
+            st.code(traceback.format_exc())
 
 if __name__ == "__main__":
     main()

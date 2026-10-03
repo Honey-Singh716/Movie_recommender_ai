@@ -1,31 +1,25 @@
 import streamlit as st
 from core.recommendations import recommend
-from utils.utils import display_movie_card, get_movie_details
+from utils.utils import display_movie_card, get_movie_details, get_poster_from_tmdb_id, get_actor_image_by_name
 import pandas as pd
-from utils.utils import get_poster_from_tmdb_id,get_actor_image_by_name
 
 
-
-def show_movie_info_page(data,cast_df):
+def show_movie_info_page(data, cast_df):
     """Display the movie information explorer page"""
-    st.header(" Movie Information Explorer")
+    st.header("Movie Information Explorer")
     st.write("Search a movie to get complete details, insights, and predictions")
     
     # Movie search with autocomplete
-    movie_titles = data['title'].tolist()
-    selected_movie = st.selectbox(
-        "Search for a movie:",
-        movie_titles,
-        index=None,
-        placeholder="Type to search...",
-        help="Start typing to search for a movie"
-    )
+    from utils.utils import movie_search_selector
+    selected_movie_row = movie_search_selector("Search for a movie:", key_prefix="info_page")
+    selected_movie = selected_movie_row["title"] if selected_movie_row is not None else None
     
     if selected_movie:
         with st.spinner(f"Fetching details for {selected_movie}..."):
             # Get movie details
             details = get_movie_details(selected_movie, data)
-            movie_row = data[data["title"] == selected_movie].iloc[0]
+            # Use a separate variable name to avoid shadowing
+            info_movie_row = data[data["title"] == selected_movie].iloc[0]
             
             if details:
                 # Display movie details
@@ -36,74 +30,97 @@ def show_movie_info_page(data,cast_df):
                 
                 with col1:
                     # Movie poster
-                    
                     api_key = st.secrets.get("TMDB_API_KEY")
-                    poster_url = get_poster_from_tmdb_id(movie_row["id"], api_key) if api_key else None
-   
+                    poster_url = get_poster_from_tmdb_id(info_movie_row["id"], api_key) if api_key else None
 
                     if poster_url:
-                        st.image(poster_url, width=200)
+                        st.image(poster_url, width=220)
                     else:
-                        st.image(
-                        "https://via.placeholder.com/300x450?text=No+Poster",
-                        width=300
-                        )
+                        st.markdown("""
+                        <div style="
+                            width:220px; height:330px;
+                            background:linear-gradient(135deg,#1a1a2e,#2d2d44);
+                            border-radius:12px;
+                            display:flex; flex-direction:column;
+                            align-items:center; justify-content:center;
+                            color:#aaa; font-size:14px;
+                        ">
+                            <span style="font-size:50px;"></span>
+                            <small>No poster</small>
+                        </div>
+                        """, unsafe_allow_html=True)
 
+                    st.markdown("<br>", unsafe_allow_html=True)
                     
                     # Quick stats
-                    st.metric("Rating", f"{details['vote_average']}")
-                    st.metric("Release Date", details['release_date'])
-                    st.metric("Runtime", f"{details['runtime']} minutes")
+                    rating = details['vote_average']
+                    st.metric("⭐ Rating", f"{rating}/10" if isinstance(rating, (int, float)) else "N/A")
+                    st.metric("Release", details['release_date'])
+                    st.metric("⏱ Runtime", f"{details['runtime']} min")
                 
                 with col2:
                     # Movie details
-                    st.write(f"**Genres:** {details['genres']}")
-                    st.write(f"**Director:** {details['director']}")
+                    st.markdown(f"**Genres:** {details['genres']}")
+                    st.markdown(f"**Director:** {details['director']}")
                     
-                    #Movie Budget
+                    # Overview
+                    st.markdown("**📖 Overview:**")
+                    st.markdown(f"> {details['overview']}")
+
+                    st.markdown("<br>", unsafe_allow_html=True)
+
+                    # Budget / Revenue / Profit in a row
                     budget = details.get("budget")
-                    if isinstance(budget, (int, float)) and budget > 0:
-                        st.metric("Budget", f"${budget:,.2f}")
-                    else:
-                        st.metric("Budget", "N/A")
-
-                    # Revenue
                     revenue = details.get("revenue")
+
+                    bc, rc, pc = st.columns(3)
+                    if isinstance(budget, (int, float)) and budget > 0:
+                        bc.metric("💰 Budget", f"${budget:,.0f}")
+                    else:
+                        bc.metric("💰 Budget", "N/A")
+
                     if isinstance(revenue, (int, float)) and revenue > 0:
-                        st.metric("Revenue", f"${revenue:,.2f}")
+                        rc.metric("Revenue", f"${revenue:,.0f}")
                     else:
-                        st.metric("Revenue", "N/A")
-                    
-                    #Profit Calculation
+                        rc.metric("Revenue", "N/A")
+
                     if isinstance(budget, (int, float)) and isinstance(revenue, (int, float)) and budget > 0 and revenue > 0:
-                        if revenue > budget:
-                            st.metric("Profit", f"${revenue - budget:,.2f}")
-                        else:
-                            st.metric("Profit", "No Profit")
+                        profit = revenue - budget
+                        profit_str = f"${profit:,.0f}" if profit > 0 else f"-${abs(profit):,.0f}"
+                        pc.metric("💹 Profit", profit_str, delta=None)
                     else:
-                        st.metric("Profit", "N/A")
+                        pc.metric("💹 Profit", "N/A")
 
+                    st.markdown("<br>", unsafe_allow_html=True)
 
-                # Movie overview
-                st.subheader("Overview")
-                st.write(details['overview'])
+                    # "Find Similar" button that navigates to recommender
+                    if st.button("🤖 Find Similar Movies", use_container_width=True, key="find_similar_btn"):
+                        st.session_state.current_page = "Movie Recommender"
+                        # Pre-fill the recommender search so user sees this movie
+                        st.session_state["recommender_query"] = selected_movie
+                        st.rerun()
+
+                st.markdown("---")
                 
-                #Cast Section
-                show_cast_section(movie_row, cast_df)
+                # Cast Section
+                show_cast_section(info_movie_row, cast_df)
 
+                st.markdown("---")
 
                 # Similar movies
-                st.subheader(" Similar Movies")
+                st.subheader("🔗 Similar Movies")
                 st.caption("Based on your selection, here are some similar movies:")
 
-                similar_movies = recommend(selected_movie,data,st.session_state.get('similarity')   )                
+                similar_movies = recommend(selected_movie, data, st.session_state.get('similarity'))
                 
                 if similar_movies:
                     cols = st.columns(5)
-                    for i, title in enumerate(similar_movies[:]):
-                        movie_row = data[data["title"] == title].iloc[0]
+                    for i, title in enumerate(similar_movies[:20]):
+                        row = data[data["title"] == title]
+                        if row.empty:
+                            continue
                         with cols[i % 5]:
-                            display_movie_card(movie_row)
+                            display_movie_card(row.iloc[0])
                 else:
                     st.warning("No similar movies found.")
             else:
@@ -112,13 +129,11 @@ def show_movie_info_page(data,cast_df):
     return None
 
 
-def get_movie_cast(movie_id,cast_df,top_n = 10):
+def get_movie_cast(movie_id, cast_df, top_n=10):
     cast = cast_df[cast_df["movie_id"] == movie_id] \
         .sort_values("order") \
         .head(top_n)
-
-    return cast    
-
+    return cast
 
 
 def show_cast_section(movie_row, cast_df):
@@ -130,33 +145,43 @@ def show_cast_section(movie_row, cast_df):
         st.info("No cast information available for this movie.")
         return
 
-    cols = st.columns(5)  # more columns = smaller cards
+    cols = st.columns(5)
     col_idx = 0
 
     tmdb_api_key = st.secrets.get("TMDB_API_KEY")
 
     for _, actor in cast.iterrows():
-        img = get_actor_image_by_name(actor["name"], tmdb_api_key)
+        img = get_actor_image_by_name(actor["name"], tmdb_api_key) if tmdb_api_key else None
         actor_name = actor.get('name', 'Unknown')
-
+        character = actor.get('character', '')
 
         with cols[col_idx % 5]:
-            # Display the cast member without click functionality
+            img_src = img if img else "https://placehold.co/120x180/1a1a2e/ffffff?text=Actor"
             st.markdown(
                 f"""
-                <div style="text-align: center;">
-                    <img src="{img if img else 'https://via.placeholder.com/120x180?text=No+Image'}" 
-                         style="width:120px; height:180px; object-fit:cover; border-radius:12px; 
-                                box-shadow: 0 4px 8px rgba(0,0,0,0.2);"/>
-                    <div style="margin-top:8px; font-weight:600; font-size:14px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                <div style="text-align: center; margin-bottom:12px;">
+                    <img src="{img_src}" 
+                         style="width:110px; height:165px; object-fit:cover; border-radius:12px; 
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.4);"
+                         onerror="this.src='https://placehold.co/120x180/1a1a2e/ffffff?text=Actor'"/>
+                    <div style="margin-top:6px; font-weight:700; font-size:13px;
+                                max-width:110px; overflow:hidden; text-overflow:ellipsis;
+                                white-space:nowrap; margin:6px auto 0;">
                         {actor_name}
                     </div>
-                    <div style="font-size:12px; color:#9aa0a6;">
-                        as {actor['character']}
+                    <div style="font-size:11px; color:#9aa0a6; max-width:110px;
+                                overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin:auto;">
+                        as {character}
                     </div>
                 </div>
                 """,
                 unsafe_allow_html=True
             )
+
+            # Click to explore actor
+            if st.button("Films", key=f"actor_btn_{actor_name[:15]}_{col_idx}", use_container_width=True):
+                st.session_state.actor_search = actor_name
+                st.session_state.current_page = "Actor Filmography"
+                st.rerun()
 
         col_idx += 1

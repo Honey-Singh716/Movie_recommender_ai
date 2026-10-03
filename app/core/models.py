@@ -31,19 +31,28 @@ MODELS_DIR = os.path.join(
     'models'
 )
 
+def rebuild_tfidf_and_similarity(data):
+    """Dynamically fit TF-IDF vectorizer and compute cosine similarity matrix."""
+    from sklearn.feature_extraction.text import TfidfVectorizer
+    from sklearn.metrics.pairwise import cosine_similarity
+    data['tags'] = data['tags'].fillna('')
+    tfidf = TfidfVectorizer(max_features=5000, stop_words='english')
+    tfidf_matrix = tfidf.fit_transform(data['tags'])
+    similarity = cosine_similarity(tfidf_matrix)
+    return tfidf, similarity
+
+@st.cache_resource(show_spinner="Loading AI models…")
 def load_models():
-    """Load all the required models and data"""
+    """Load all the required models and data. Cached so rebuild only happens once per session."""
     try:
         # Re-register just before loading in case modules were added after import
         _register_fn_for_pickle()
 
-        # Movie recommender data — use context managers to avoid file handle leaks
-        data = pd.read_pickle(os.path.join(MODELS_DIR, 'cleaned_movie_data.pkl'))
-        with open(os.path.join(MODELS_DIR, 'tfidf_vectorizer.pkl'), 'rb') as f:
-            tfidf = pickle.load(f)
-        with open(os.path.join(MODELS_DIR, 'cosine_similarity.pkl'), 'rb') as f:
-            similarity = pickle.load(f)
-
+        # Load database and fetch all movies
+        from utils.db_manager import init_db, load_all_movies
+        init_db()
+        data = load_all_movies()
+        tfidf, similarity = rebuild_tfidf_and_similarity(data)
 
         # Mood prediction model (PIPELINE)
         mood_model_path = os.path.join(MODELS_DIR, 'mood_text_model.pkl')

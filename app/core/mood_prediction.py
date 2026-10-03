@@ -173,12 +173,12 @@ def _merge_scores(
 
 
 def _normalize(scores: dict[str, float]) -> dict[str, float]:
-    """Min-max normalize so confidence sits in [0, 1]."""
+    """Scale scores so they max out at 1.0, without artificially boosting low scores."""
     if not scores:
         return scores
-    min_v, max_v = min(scores.values()), max(scores.values())
-    span = max_v - min_v if max_v != min_v else 1.0
-    return {m: (v - min_v) / span for m, v in scores.items()}
+    # Keyword=0.7, Synonym=0.35, ML=(up to 1.0)*1.2
+    # Just capping at 1.0 provides a realistic confidence percentage.
+    return {m: min(v, 1.0) for m, v in scores.items()}
 
 
 def predict_mood(
@@ -232,7 +232,7 @@ def get_genres_for_mood(mood: str) -> list[str]:
 
 
 def get_mood_emoji(mood: str) -> str:
-    return MOOD_EMOJI.get(mood, "🎬")
+    return MOOD_EMOJI.get(mood, "")
 
 
 def get_mood_label(mood: str) -> str:
@@ -241,4 +241,4 @@ def get_mood_label(mood: str) -> str:
 
 def get_all_mood_labels() -> dict[str, str]:
     """Return all mood keys with their emoji + label for display."""
-    return {k: f"{MOOD_EMOJI.get(k, '🎬')} {MOOD_LABELS.get(k, k)}" for k in MOOD_GENRE_MAP}
+    return {k: f"{MOOD_EMOJI.get(k, '')} {MOOD_LABELS.get(k, k)}" for k in MOOD_GENRE_MAP}

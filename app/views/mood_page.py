@@ -247,7 +247,7 @@ def show_mood_page(data, mood_model):
                 cols = st.columns(5)
                 for i, (_, movie_row) in enumerate(recommendations.iterrows()):
                     with cols[i % 5]:
-                        display_movie_card(movie_row)
+                        display_movie_card(movie_row, key_suffix="mood")
             else:
                 st.error("No movies found. Try a different mood or disable the quality gate.")
 
